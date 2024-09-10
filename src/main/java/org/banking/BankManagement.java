@@ -58,25 +58,45 @@ public class BankManagement { // these class provides all
                 while (true) {
                     try {
                         System.out.println("Hello, " + rs.getString("CName"));
-                        System.out.println("1) Transfer Money");
-                        System.out.println("2) View Balance");
+                        System.out.println("1) Deposit Money");
+                        System.out.println("2) Transfer Money");
+                        System.out.println("3) Withdraw Money");
+                        System.out.println("4) View Balance");
                         System.out.println("5) LogOut");
-                        System.out.print("Enter Choice:");
+                        System.out.print("Enter Choice: ");
                         ch = Integer.parseInt(sc.readLine());
                         if (ch == 1) {
-                            System.out.print("Enter Receiver A/c No:");
+                            System.out.print("Enter Amount to Deposit: ");
+                            int depositAmount = Integer.parseInt(sc.readLine());
+                            if (DepositMoney(Sender_Acc, depositAmount)) {
+                                System.out.println("Deposit Successful!");
+                            } else {
+                                System.out.println("Deposit Failed!");
+                            }
+                        }
+                        else if (ch == 2) {
+                            System.out.print("Enter Receiver A/c No: ");
                             receipentAcc = Integer.parseInt(sc.readLine());
-                            System.out.print("Enter Amount:");
+                            System.out.print("Enter Amount: ");
                             Amount = Integer.parseInt(sc.readLine());
 
                             if (BankManagement.transferMoney(Sender_Acc, receipentAcc, Amount)) {
                                 System.out.println("MSG : Money Sent Successfully!\n");
-                            }
-                            else {
+                            } else {
                                 System.out.println("ERR : Failed!\n");
                             }
                         }
-                        else if (ch == 2) {
+                        else if (ch == 3) {
+                            System.out.print("Enter Amount to Withdraw: ");
+                            int withdrawAmount = Integer.parseInt(sc.readLine());
+                            if (withdrawMoney(Sender_Acc, withdrawAmount)) {
+                                System.out.println("Withdrawal Successful!");
+                            }
+                            else {
+                                System.out.println("Withdrawal Failed!");
+                            }
+                        }
+                        else if (ch == 4) {
                             BankManagement.getBalance(Sender_Acc);
                         }
                         else if (ch == 5) {
@@ -105,6 +125,37 @@ public class BankManagement { // these class provides all
         }
         return false;
     }
+
+    // Deposit Money Method
+    public static boolean DepositMoney(int Acc_No, int Amount) {
+        if (Amount <= 0) {
+            System.out.println("Invalid Amount. Please Enter a Positive Amount.");
+            return false;
+        }
+
+        String depositQuery = "UPDATE customer SET Balance = Balance + ? WHERE Acc_No = ?";
+
+        try (Connection con = conn.getConnection();
+             PreparedStatement st = con.prepareStatement(depositQuery)) {
+
+            st.setInt(1, Amount);
+            st.setInt(2, Acc_No);
+
+            int rowsAffected = st.executeUpdate();
+            if (rowsAffected == 1) {
+                System.out.println("Deposit Successful!");
+                return true;
+            } else {
+                System.out.println("Deposit Failed!");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+
     public static void getBalance(int Acc_No) // fetch balance method
     {
         try {
@@ -175,4 +226,35 @@ public class BankManagement { // these class provides all
         // return
         return false;
     }
+
+    // Withdraw Money Method
+    public static boolean withdrawMoney(int Acc_No, int Amount) {
+        if (Amount <= 0) {
+            System.out.println("Invalid Amount. Please Enter a Positive Amount.");
+            return false;
+        }
+
+        String withdrawQuery = "UPDATE customer SET Balance = Balance - ? WHERE Acc_No = ? AND Balance >= ?";
+
+        try (Connection con = conn.getConnection();
+             PreparedStatement st = con.prepareStatement(withdrawQuery)) {
+
+            st.setInt(1, Amount);
+            st.setInt(2, Acc_No);
+            st.setInt(3, Amount);
+
+            int rowsAffected = st.executeUpdate();
+            if (rowsAffected == 1) {
+                System.out.println("Withdrawal Successful!");
+                return true;
+            } else {
+                System.out.println("Insufficient Balance or Withdrawal Failed!");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
 }
